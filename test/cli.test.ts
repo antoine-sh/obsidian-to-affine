@@ -1,6 +1,9 @@
 import { spawnSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, test } from "vitest";
-import { hashTree } from "./helpers.ts";
+import { hashTree, readTree } from "./helpers.ts";
 
 // Node >= 22.18 strips TypeScript types natively, so no build step is needed here.
 function cli(...args: string[]) {
@@ -51,8 +54,20 @@ test("CLI exits 1 with a clear message when the vault does not exist", () => {
 	expect(r.stderr).toContain("does not exist: test/fixtures/scan-basic/nope");
 });
 
-test("CLI rejects --out until the write stage exists", () => {
-	const r = cli("test/fixtures/scan-basic/vault", "--out", "/tmp/x");
-	expect(r.status).toBe(2);
-	expect(r.stderr).toMatch(/--out/);
+test("CLI converts into --out, reporting warnings on stderr", () => {
+	const vault = "test/fixtures/write-basic/vault";
+	const before = hashTree(vault);
+	const out = join(mkdtempSync(join(tmpdir(), "o2a-")), "out");
+	const r = cli(vault, "--out", out);
+	expect(hashTree(vault)).toBe(before);
+	expect(r.status).toBe(0);
+	expect(readTree(out)).toEqual(readTree("test/fixtures/write-basic/expected"));
+	expect(r.stderr).toContain("Projects/Plan.md:1 broken-link");
+});
+
+test("CLI exits 1 when --out is inside the vault", () => {
+	const vault = "test/fixtures/write-basic/vault";
+	const r = cli(vault, "--out", `${vault}/out`);
+	expect(r.status).toBe(1);
+	expect(r.stderr).toContain(`outside the vault: ${vault}/out`);
 });

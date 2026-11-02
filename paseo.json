@@ -7,7 +7,7 @@
 			"command": "pnpm test:watch"
 		},
 		"test": {
-			"command": "pnpm build && node dist/cli/index.js /home/coder/test/vault"
+			"command": "pnpm build && rm -rf /tmp/o2a-demo && node dist/cli/index.js /home/coder/test/vault --out /tmp/o2a-demo"
 		}
 	}
 }
