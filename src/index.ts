@@ -30,21 +30,22 @@ export {
 	transformNote,
 } from "./transform/index.ts";
 export {
-	assertOutsideVault,
 	checkOutput,
+	checkReport,
 	WriteError,
 	writeMarkdown,
 } from "./writers/markdown/index.ts";
 
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { parseVault } from "./parse/index.ts";
 import { buildReport, type ConversionReport } from "./report/index.ts";
 import { buildIndex } from "./resolve/index.ts";
 import { type ScanOptions, scanVault } from "./scan/index.ts";
 import { transformNote } from "./transform/index.ts";
 import {
-	assertOutsideVault,
 	checkOutput,
+	checkReport,
 	writeMarkdown,
 } from "./writers/markdown/index.ts";
 
@@ -63,7 +64,7 @@ export async function convertVault(
 	// Before parsing or writing, so a bad --out or --report fails fast and nothing is written.
 	await checkOutput(vaultPath, options.out);
 	if (options.report !== undefined)
-		await assertOutsideVault(vaultPath, options.report);
+		await checkReport(vaultPath, options.out, options.report);
 	const index = buildIndex(scan);
 	const parsed = await parseVault(vaultPath, scan);
 	const notes = parsed.map((n) => transformNote(n, index));
@@ -72,7 +73,9 @@ export async function convertVault(
 		...parsed.flatMap((n) => n.warnings),
 		...notes.flatMap((n) => n.warnings),
 	]);
-	if (options.report !== undefined)
+	if (options.report !== undefined) {
+		await mkdir(dirname(options.report), { recursive: true });
 		await writeFile(options.report, `${JSON.stringify(report, null, "\t")}\n`);
+	}
 	return report;
 }

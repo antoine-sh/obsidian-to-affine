@@ -38,7 +38,8 @@ export function formatReport(report: ConversionReport): string {
 	const summary = `Converted ${plural(report.notes, "note")} and ${plural(report.attachments, "attachment")} with ${plural(report.warnings.length, "warning")}${byKind ? ` (${byKind})` : ""}.`;
 	return [
 		...report.warnings.map(
-			(w) => `${w.file}:${w.line} ${w.kind}: ${w.message}`,
+			// Messages such as YAML errors span lines; the console gets the first, the JSON keeps all.
+			(w) => `${w.file}:${w.line} ${w.kind}: ${w.message.split("\n")[0]}`,
 		),
 		summary,
 	].join("\n");

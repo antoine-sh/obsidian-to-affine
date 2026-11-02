@@ -5,6 +5,7 @@ import {
 	readdir,
 	realpath,
 	rm,
+	stat,
 	writeFile,
 } from "node:fs/promises";
 import {
@@ -23,7 +24,13 @@ import { unified } from "unified";
 import type { TransformedNote } from "../../transform/index.ts";
 
 export class WriteError extends Error {
-	readonly kind: "out-inside-vault" | "out-not-empty" | "out-not-directory";
+	readonly kind:
+		| "out-inside-vault"
+		| "out-not-empty"
+		| "out-not-directory"
+		| "report-inside-vault"
+		| "report-inside-out"
+		| "report-is-directory";
 	readonly path: string;
 	constructor(kind: WriteError["kind"], path: string) {
 		super(
@@ -31,6 +38,9 @@ export class WriteError extends Error {
 				"out-inside-vault": `Output path must be outside the vault: ${path}`,
 				"out-not-empty": `Output directory is not empty: ${path} (choose a new or empty directory)`,
 				"out-not-directory": `Output path is not a directory: ${path}`,
+				"report-inside-vault": `Report path must be outside the vault: ${path}`,
+				"report-inside-out": `Report path must be outside the output directory: ${path}`,
+				"report-is-directory": `Report path is a directory, expected a file path: ${path}`,
 			}[kind],
 		);
 		this.kind = kind;
@@ -48,7 +58,8 @@ export async function checkOutput(
 	vaultPath: string,
 	out: string,
 ): Promise<void> {
-	await assertOutsideVault(vaultPath, out);
+	if (await isInside(vaultPath, out))
+		throw new WriteError("out-inside-vault", out);
 	const entries = await readdir(out).catch((e: unknown) => {
 		const code = (e as NodeJS.ErrnoException).code;
 		if (code === "ENOENT") return [];
@@ -58,15 +69,26 @@ export async function checkOutput(
 	if (entries.length) throw new WriteError("out-not-empty", out);
 }
 
-/** Throws unless `path` (existing or not) is outside the vault, so the vault is never written to. */
-export async function assertOutsideVault(
+/** Throws unless `report` can be written without touching the vault or the export, checked before any write. */
+export async function checkReport(
 	vaultPath: string,
-	path: string,
+	out: string,
+	report: string,
 ): Promise<void> {
-	// Real paths, so a symlink cannot smuggle the output into the vault.
-	const rel = relative(await realpath(vaultPath), await real(resolve(path)));
-	if (rel === "" || (rel.split(sep)[0] !== ".." && !isAbsolute(rel)))
-		throw new WriteError("out-inside-vault", path);
+	if (await isInside(vaultPath, report))
+		throw new WriteError("report-inside-vault", report);
+	// Inside `out` it could replace an exported note, and AFFiNE would import it as a file.
+	if (await isInside(out, report))
+		throw new WriteError("report-inside-out", report);
+	const info = await stat(report).catch(() => undefined);
+	if (info?.isDirectory()) throw new WriteError("report-is-directory", report);
+}
+
+/** Whether `path` (existing or not) is `root` or inside it. */
+async function isInside(root: string, path: string): Promise<boolean> {
+	// Real paths, so a symlink cannot smuggle a path into `root`.
+	const rel = relative(await real(resolve(root)), await real(resolve(path)));
+	return rel === "" || (rel.split(sep)[0] !== ".." && !isAbsolute(rel));
 }
 
 /** Mirrors the vault layout, so the vault-relative links built by transform stay valid. Call `checkOutput` first. */

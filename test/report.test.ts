@@ -58,7 +58,7 @@ test("refuses a report path inside the vault before writing anything", async () 
 	const out = join(tmp(), "out");
 	const report = `${vault}/report.json`;
 	await expect(convertVault(vault, { out, report })).rejects.toMatchObject({
-		kind: "out-inside-vault",
+		kind: "report-inside-vault",
 		message: expect.stringContaining(report),
 	});
 	expect(existsSync(out)).toBe(false);
@@ -90,4 +90,53 @@ test("CLI exits 2 when --report is given without --out", () => {
 	const r = cli(vault, "--report", join(tmp(), "r.json"));
 	expect(r.status).toBe(2);
 	expect(r.stderr).toMatch(/--report requires --out/);
+});
+
+test.each([
+	["inside --out", (out: string) => join(out, "Note.md")],
+	["equal to --out", (out: string) => out],
+])(
+	"refuses a report path %s so no exported file is replaced",
+	async (_, at) => {
+		const out = join(tmp(), "out");
+		await expect(
+			convertVault(vault, { out, report: at(out) }),
+		).rejects.toMatchObject({ kind: "report-inside-out" });
+		expect(existsSync(out)).toBe(false);
+	},
+);
+
+test("refuses a report path that is a directory before writing anything", async () => {
+	const dir = tmp();
+	const out = join(dir, "out");
+	await expect(convertVault(vault, { out, report: dir })).rejects.toMatchObject(
+		{ kind: "report-is-directory", message: expect.stringContaining(dir) },
+	);
+	expect(existsSync(out)).toBe(false);
+});
+
+test("creates missing parent directories for the report", async () => {
+	const dir = tmp();
+	const report = join(dir, "a", "b", "r.json");
+	await convertVault(vault, { out: join(dir, "out"), report });
+	expect(existsSync(report)).toBe(true);
+});
+
+test("prints only the first line of a multi-line warning on the console", () => {
+	expect(
+		formatReport({
+			notes: 1,
+			attachments: 0,
+			warnings: [
+				{
+					kind: "invalid-frontmatter",
+					file: "a.md",
+					line: 1,
+					message: "bad\n\n  ^\n",
+				},
+			],
+		}),
+	).toBe(
+		"a.md:1 invalid-frontmatter: bad\nConverted 1 note and 0 attachments with 1 warning (invalid-frontmatter: 1).",
+	);
 });
