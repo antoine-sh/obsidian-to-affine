@@ -15,9 +15,6 @@ const { positionals, values } = (() => {
 			allowPositionals: true,
 			options: {
 				exclude: { type: "string", multiple: true },
-				// Accepted so existing invocations keep working; not used until the write stage exists.
-				out: { type: "string" },
-				verbose: { type: "boolean" },
 			},
 		});
 	} catch (e) {
