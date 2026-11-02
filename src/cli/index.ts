@@ -9,7 +9,7 @@ import {
 } from "../index.ts";
 
 const USAGE =
-	"Usage: obsidian-to-affine <vault-path> [--out <path>] [--report <path>] [--exclude <glob>...]";
+	"Usage: obsidian-to-affine <vault-path> [--out <path>] [--format markdown] [--zip] [--exclude <glob>...] [--report <path>] [--verbose]";
 
 function usageError(message: string): never {
 	console.error(`${message}\n${USAGE}`);
@@ -22,8 +22,11 @@ const { positionals, values } = (() => {
 			allowPositionals: true,
 			options: {
 				exclude: { type: "string", multiple: true },
+				format: { type: "string" },
 				out: { type: "string" },
 				report: { type: "string" },
+				verbose: { type: "boolean" },
+				zip: { type: "boolean" },
 			},
 		});
 	} catch (e) {
@@ -33,8 +36,12 @@ const { positionals, values } = (() => {
 const [vaultPath] = positionals;
 if (positionals.length !== 1 || vaultPath === undefined)
 	usageError("Expected exactly one vault path.");
-if (values.report !== undefined && values.out === undefined)
-	usageError("--report requires --out.");
+for (const flag of ["report", "format", "zip", "verbose"] as const)
+	if (values[flag] !== undefined && values.out === undefined)
+		usageError(`--${flag} requires --out.`);
+// Only one writer so far; `snapshot` is planned.
+if (values.format !== undefined && values.format !== "markdown")
+	usageError(`Unsupported --format: ${values.format} (supported: markdown).`);
 
 try {
 	if (values.out !== undefined) {
@@ -42,6 +49,8 @@ try {
 			out: values.out,
 			report: values.report,
 			exclude: values.exclude,
+			zip: values.zip,
+			log: values.verbose ? (m) => console.error(m) : undefined,
 		});
 		console.error(formatReport(report));
 	} else {

@@ -28,6 +28,7 @@ export class WriteError extends Error {
 		| "out-inside-vault"
 		| "out-not-empty"
 		| "out-not-directory"
+		| "out-exists"
 		| "report-inside-vault"
 		| "report-inside-out"
 		| "report-is-directory";
@@ -38,6 +39,7 @@ export class WriteError extends Error {
 				"out-inside-vault": `Output path must be outside the vault: ${path}`,
 				"out-not-empty": `Output directory is not empty: ${path} (choose a new or empty directory)`,
 				"out-not-directory": `Output path is not a directory: ${path}`,
+				"out-exists": `Output file already exists: ${path} (choose a new file path)`,
 				"report-inside-vault": `Report path must be outside the vault: ${path}`,
 				"report-inside-out": `Report path must be outside the output directory: ${path}`,
 				"report-is-directory": `Report path is a directory, expected a file path: ${path}`,
@@ -53,13 +55,19 @@ const processor = unified()
 	.use(remarkFrontmatter)
 	.use(remarkStringify);
 
-/** Throws unless `out` is outside the vault and new or empty, so neither the vault nor user files get overwritten. */
+/** Throws unless `out` is outside the vault and new or empty (new, for a zip), so neither the vault nor user files get overwritten. */
 export async function checkOutput(
 	vaultPath: string,
 	out: string,
+	zip = false,
 ): Promise<void> {
 	if (await isInside(vaultPath, out))
 		throw new WriteError("out-inside-vault", out);
+	if (zip) {
+		if (await stat(out).catch(() => undefined))
+			throw new WriteError("out-exists", out);
+		return;
+	}
 	const entries = await readdir(out).catch((e: unknown) => {
 		const code = (e as NodeJS.ErrnoException).code;
 		if (code === "ENOENT") return [];
