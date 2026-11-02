@@ -18,3 +18,8 @@ export {
 	type ScanResult,
 	scanVault,
 } from "./scan/index.ts";
+export {
+	type TransformedNote,
+	type TransformWarning,
+	transformNote,
+} from "./transform/index.ts";
