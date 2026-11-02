@@ -48,10 +48,7 @@ export async function checkOutput(
 	vaultPath: string,
 	out: string,
 ): Promise<void> {
-	// Real paths, so a symlink cannot smuggle the output into the vault.
-	const rel = relative(await realpath(vaultPath), await real(resolve(out)));
-	if (rel === "" || (rel.split(sep)[0] !== ".." && !isAbsolute(rel)))
-		throw new WriteError("out-inside-vault", out);
+	await assertOutsideVault(vaultPath, out);
 	const entries = await readdir(out).catch((e: unknown) => {
 		const code = (e as NodeJS.ErrnoException).code;
 		if (code === "ENOENT") return [];
@@ -59,6 +56,17 @@ export async function checkOutput(
 		throw e;
 	});
 	if (entries.length) throw new WriteError("out-not-empty", out);
+}
+
+/** Throws unless `path` (existing or not) is outside the vault, so the vault is never written to. */
+export async function assertOutsideVault(
+	vaultPath: string,
+	path: string,
+): Promise<void> {
+	// Real paths, so a symlink cannot smuggle the output into the vault.
+	const rel = relative(await realpath(vaultPath), await real(resolve(path)));
+	if (rel === "" || (rel.split(sep)[0] !== ".." && !isAbsolute(rel)))
+		throw new WriteError("out-inside-vault", path);
 }
 
 /** Mirrors the vault layout, so the vault-relative links built by transform stay valid. Call `checkOutput` first. */

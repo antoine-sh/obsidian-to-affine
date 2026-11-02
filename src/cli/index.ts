@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
-import { convertVault, ScanError, scanVault, WriteError } from "../index.ts";
+import {
+	convertVault,
+	formatReport,
+	ScanError,
+	scanVault,
+	WriteError,
+} from "../index.ts";
 
 const USAGE =
-	"Usage: obsidian-to-affine <vault-path> [--out <path>] [--exclude <glob>...]";
+	"Usage: obsidian-to-affine <vault-path> [--out <path>] [--report <path>] [--exclude <glob>...]";
 
 function usageError(message: string): never {
 	console.error(`${message}\n${USAGE}`);
@@ -17,6 +23,7 @@ const { positionals, values } = (() => {
 			options: {
 				exclude: { type: "string", multiple: true },
 				out: { type: "string" },
+				report: { type: "string" },
 			},
 		});
 	} catch (e) {
@@ -26,15 +33,17 @@ const { positionals, values } = (() => {
 const [vaultPath] = positionals;
 if (positionals.length !== 1 || vaultPath === undefined)
 	usageError("Expected exactly one vault path.");
+if (values.report !== undefined && values.out === undefined)
+	usageError("--report requires --out.");
 
 try {
 	if (values.out !== undefined) {
-		const { warnings } = await convertVault(vaultPath, {
+		const report = await convertVault(vaultPath, {
 			out: values.out,
+			report: values.report,
 			exclude: values.exclude,
 		});
-		for (const w of warnings)
-			console.error(`${w.file}:${w.line} ${w.kind}: ${w.message}`);
+		console.error(formatReport(report));
 	} else {
 		// Without --out, list what scan found.
 		const result = await scanVault(vaultPath, { exclude: values.exclude });

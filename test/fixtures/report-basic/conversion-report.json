@@ -1,0 +1,30 @@
+{
+	"notes": 2,
+	"attachments": 1,
+	"warnings": [
+		{
+			"kind": "invalid-frontmatter",
+			"file": "Note.md",
+			"line": 1,
+			"message": "Invalid YAML frontmatter, kept as text: Flow sequence in block collection must be sufficiently indented and end with a ] at line 1, column 9:\n\ntags: [a\n        ^\n"
+		},
+		{
+			"kind": "broken-link",
+			"file": "Note.md",
+			"line": 5,
+			"message": "Link target not found: Ghost"
+		},
+		{
+			"kind": "note-embed",
+			"file": "Note.md",
+			"line": 5,
+			"message": "Embedded note Other.md converted to a link"
+		},
+		{
+			"kind": "unsupported",
+			"file": "Note.md",
+			"line": 7,
+			"message": "dataview block has no AFFiNE equivalent; kept as code"
+		}
+	]
+}
