@@ -30,6 +30,7 @@
 	},
 	"packageManager": "pnpm@12.16.1",
 	"dependencies": {
+		"fflate": "^0.8.3",
 		"remark-frontmatter": "^5.0.0",
 		"remark-gfm": "^4.0.1",
 		"remark-parse": "^11.0.0",
