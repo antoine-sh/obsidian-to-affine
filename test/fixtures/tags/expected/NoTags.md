@@ -1,0 +1,5 @@
+---
+title: Only props
+---
+
+Body.

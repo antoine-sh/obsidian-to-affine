@@ -1,0 +1,12 @@
+[
+	{
+		"kind": "note-embed",
+		"file": "Home.md",
+		"line": 7
+	},
+	{
+		"kind": "broken-link",
+		"file": "Home.md",
+		"line": 9
+	}
+]

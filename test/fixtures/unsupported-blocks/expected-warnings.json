@@ -1,0 +1,22 @@
+[
+	{
+		"kind": "invalid-frontmatter",
+		"file": "Bad.md",
+		"line": 1
+	},
+	{
+		"kind": "unsupported",
+		"file": "Home.md",
+		"line": 3
+	},
+	{
+		"kind": "unsupported",
+		"file": "Home.md",
+		"line": 7
+	},
+	{
+		"kind": "unsupported",
+		"file": "Home.md",
+		"line": 11
+	}
+]
