@@ -1,0 +1,13 @@
+{
+	"worktree": {
+		"setup": "pnpm install --frozen-lockfile"
+	},
+	"scripts": {
+		"test:watch": {
+			"command": "pnpm test:watch"
+		},
+		"test": {
+			"command": "pnpm build && node dist/cli/index.js /home/coder/test/vault --out /tmp/o2a-demo --verbose"
+		}
+	}
+}
