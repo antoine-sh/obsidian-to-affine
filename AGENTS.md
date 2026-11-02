@@ -12,6 +12,8 @@ Guidance for AI coding agents (and humans) working on **obsidian-to-affine**.
 
 ### Roadmap
 
+Status: v1 is implemented end to end (scan → parse → resolve → transform → write → report) with `--out`, `--format markdown`, `--zip`, `--exclude`, `--report` and `--verbose`. Only the snapshot writer is still planned. `README.md` is the user-facing doc: update it when flags, behavior or warning kinds change.
+
 1. **v1: normalized Markdown export.** Rewrite Obsidian-specific syntax into Markdown that AFFiNE's Markdown importer handles well, and package it with its attachments.
 2. **Later: AFFiNE snapshot export.** Add a second output format behind a flag (for example `--format snapshot`) that keeps more detail: linked docs, properties, tags, and folders. Design v1 so this can be added as a new *writer* without rewriting parsing or transformation.
 
@@ -20,7 +22,7 @@ Guidance for AI coding agents (and humans) working on **obsidian-to-affine**.
 | Obsidian feature | Expected handling |
 |---|---|
 | Wikilinks `[[Note]]`, `[[Note\|alias]]`, `[[Note#Heading]]`, `[[Note#^block]]` | Resolve to the target note using Obsidian's shortest-path resolution, then rewrite as links AFFiNE can import. Keep alias text. |
-| Embeds `![[Note]]`, `![[image.png]]`, `![[file.pdf]]` | Embedded attachments become standard Markdown image/file references. Embedded notes become links, or inlined content where that is viable. |
+| Embeds `![[Note]]`, `![[image.png]]`, `![[file.pdf]]` | Embedded attachments become standard Markdown image/file references. Embedded notes currently become links with a `note-embed` warning; inlining is not implemented. |
 | Attachments (images, PDFs, other files) | Copy into the export with stable, collision-free paths and update every reference to them. |
 | YAML frontmatter and `#tags` (including nested `#a/b`) | Keep them as doc properties and tags in a form AFFiNE can import. Merge frontmatter `tags:` with inline tags and remove duplicates. |
 | Folder structure | Mirror the vault's folder hierarchy in the export so it maps to AFFiNE's organization. |
@@ -80,6 +82,7 @@ src/
   transform/
   writers/
     markdown/
+    zip.ts      # packages a finished export directory
   report/
   index.ts      # programmatic API used by the CLI
 test/
@@ -89,6 +92,8 @@ test/
       expected/    # golden output
   *.test.ts
 ```
+
+Not every fixture has both `vault/` and `expected/` yet (for example `scan-basic` has only `vault/`).
 
 Principles:
 
