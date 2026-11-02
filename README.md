@@ -92,4 +92,4 @@ pnpm typecheck    # tsc --noEmit
 pnpm format       # Biome format
 ```
 
-Tests use fixture vaults in `test/fixtures/<case>/`. Contribution rules (TDD, Conventional Commits) are in [AGENTS.md](AGENTS.md).
+Tests use fixture vaults in `test/fixtures/<case>/`. Golden fixtures (`vault/` → `expected/` plus `expected-warnings.json`) cover `wikilinks`, `names`, `embeds`, `tags` and `unsupported-blocks`; the source vault is checked to be unchanged after each run. Contribution rules (TDD, Conventional Commits) are in [AGENTS.md](AGENTS.md).

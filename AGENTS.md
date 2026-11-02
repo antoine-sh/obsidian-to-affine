@@ -93,7 +93,9 @@ test/
   *.test.ts
 ```
 
-Not every fixture has both `vault/` and `expected/` yet (for example `scan-basic` has only `vault/`).
+Golden fixtures (run by `test/fixtures.test.ts`, each with `vault/`, `expected/` and `expected-warnings.json` listing `kind`, `file`, `line`): `wikilinks`, `names` (spaces, Unicode, same-name notes in different folders, deep paths), `embeds`, `tags`, `unsupported-blocks`.
+
+Other fixtures are used by focused tests: `scan-basic` (only `vault/`), `write-basic`, `unsupported-files`, and `report-basic` (also has `conversion-report.json`).
 
 Principles:
 
