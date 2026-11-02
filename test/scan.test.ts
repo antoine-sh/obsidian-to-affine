@@ -1,25 +1,9 @@
-import { createHash } from "node:crypto";
-import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 import { scanVault } from "../src/scan/index.ts";
+import { hashTree } from "./helpers.ts";
 
 const vault = "test/fixtures/scan-basic/vault";
-
-function hashTree(dir: string): string {
-	const h = createHash("sha256");
-	for (const e of readdirSync(dir, {
-		recursive: true,
-		withFileTypes: true,
-	}).sort((a, b) =>
-		join(a.parentPath, a.name).localeCompare(join(b.parentPath, b.name)),
-	)) {
-		const p = join(e.parentPath, e.name);
-		h.update(p);
-		if (e.isFile()) h.update(readFileSync(p));
-	}
-	return h.digest("hex");
-}
 
 test("scan lists notes, attachments and ignored paths, sorted, POSIX", async () => {
 	const before = hashTree(vault);
