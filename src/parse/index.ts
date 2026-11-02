@@ -42,7 +42,7 @@ declare module "mdast" {
 }
 
 export interface ParseWarning {
-	kind: "invalid-frontmatter";
+	kind: "invalid-frontmatter" | "unsupported";
 	/** Vault-relative POSIX path. */
 	file: string;
 	line: number;
@@ -67,7 +67,33 @@ const processor = unified()
 // Wikilinks: no brackets inside. Tags: Obsidian requires whitespace (or line start) before `#`.
 const OBSIDIAN = /(!?)\[\[([^[\]]+)\]\]|(?<=^|\s)#([\p{L}\p{N}_/-]+)/gu;
 
+// Files AFFiNE cannot represent; the whole source is kept as one code block, with this language.
+const UNSUPPORTED: [RegExp, string, string][] = [
+	[/\.canvas$/i, "json", "Canvas"],
+	[/\.excalidraw\.md$/i, "excalidraw", "Excalidraw drawing"],
+];
+
 export function parseNote(path: string, source: string): ParsedNote {
+	const unsupported = UNSUPPORTED.find(([re]) => re.test(path));
+	if (unsupported) {
+		const [, lang, what] = unsupported;
+		return {
+			path,
+			frontmatter: {},
+			ast: {
+				type: "root",
+				children: [{ type: "code", lang, value: source.replace(/\r?\n$/, "") }],
+			},
+			warnings: [
+				{
+					kind: "unsupported",
+					file: path,
+					line: 1,
+					message: `${what} has no AFFiNE equivalent; kept as code`,
+				},
+			],
+		};
+	}
 	const ast = processor.parse(source);
 	const warnings: ParseWarning[] = [];
 	let frontmatter: Record<string, unknown> = {};

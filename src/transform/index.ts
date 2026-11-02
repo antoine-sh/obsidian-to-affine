@@ -15,6 +15,7 @@ export interface TransformWarning {
 }
 
 export interface TransformedNote {
+	/** Output path: the vault path, with `.md` appended when missing (e.g. canvases). */
 	path: string;
 	/** Frontmatter with `tags` replaced by the merged tag list (when there are tags). */
 	frontmatter: Record<string, unknown>;
@@ -31,7 +32,7 @@ const PLUGIN_BLOCKS = new Set(["dataview", "dataviewjs", "tasks", "query"]);
 
 /**
  * Rewrites a parsed note into plain Markdown semantics. Pure: the input note is not mutated.
- * Output paths mirror vault paths, so links point at the target's vault path relative to this note.
+ * Output paths mirror vault paths (plus `.md` for canvases), so links point at the target's output path relative to this note.
  */
 export function transformNote(
 	note: ParsedNote,
@@ -112,7 +113,13 @@ export function transformNote(
 		else ast.children.unshift(yaml);
 	}
 
-	return { path: note.path, frontmatter, tags, ast, warnings };
+	return { path: outPath(note.path), frontmatter, tags, ast, warnings };
+}
+
+/** AFFiNE only imports `.md` files as docs. */
+function outPath(path: string): string {
+	// shortcut: `X.canvas.md` next to `X.canvas` collides and fails the write; rename if users hit it.
+	return /\.md$/i.test(path) ? path : `${path}.md`;
 }
 
 /** Obsidian accepts a list or a comma/space-separated string. */
@@ -134,7 +141,8 @@ function rewriteLink(
 		warn("broken-link", link, `Link target not found: ${link.target}`);
 		return { type: "text", value: link.value };
 	}
-	const rel = posix.relative(posix.dirname(from), target.path);
+	const dest = target.kind === "note" ? outPath(target.path) : target.path;
+	const rel = posix.relative(posix.dirname(from), dest);
 	const anchor = link.heading ?? (link.block && `^${link.block}`);
 	const url = [rel, anchor]
 		.filter(Boolean)

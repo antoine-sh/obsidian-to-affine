@@ -61,7 +61,8 @@ export async function scanVault(
 			} else if (entry.isFile()) {
 				// shortcut: `.MD` counts as a note so its content gets converted; unverified whether Obsidian
 				// itself treats it as one. Revisit if a real vault shows `[[README]]` should not resolve to it.
-				(entry.name.toLowerCase().endsWith(".md")
+				// Canvases are notes so parse keeps their JSON as text instead of copying an unimportable file.
+				(/\.(md|canvas)$/i.test(entry.name)
 					? result.notes
 					: result.attachments
 				).push(path);

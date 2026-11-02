@@ -209,3 +209,10 @@ test("parseVault parses every scanned note without touching the vault", async ()
 	});
 	expect(hashTree(vault)).toBe(before);
 });
+
+test("an unsupported CRLF file drops its final line ending like remark does", () => {
+	const { ast } = parseNote("Board.canvas", '{\r\n"nodes":[]\r\n}\r\n');
+	expect(shape(ast.children)).toEqual([
+		{ type: "code", lang: "json", value: '{\r\n"nodes":[]\r\n}' },
+	]);
+});
