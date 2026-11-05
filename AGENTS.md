@@ -12,10 +12,9 @@ Guidance for AI coding agents (and humans) working on **obsidian-to-affine**.
 
 ### Roadmap
 
-Status: v1 is implemented end to end (scan → parse → resolve → transform → write → report) with `--out`, `--format markdown`, `--zip`, `--exclude`, `--report` and `--verbose`. Only the snapshot writer is still planned. `README.md` is the user-facing doc: update it when flags, behavior or warning kinds change.
+Status: v1 is implemented end to end (scan → parse → resolve → transform → write → report) with `--out`, `--zip`, `--exclude`, `--report` and `--verbose`. There is no snapshot writer: AFFiNE's snapshot import cannot carry folders, tags or properties, so it was dropped. `README.md` is the user-facing doc: update it when flags, behavior or warning kinds change.
 
-1. **v1: normalized Markdown export.** Rewrite Obsidian-specific syntax into Markdown that AFFiNE's Markdown importer handles well, and package it with its attachments.
-2. **Later: AFFiNE snapshot export.** Add a second output format behind a flag (for example `--format snapshot`) that keeps more detail: linked docs, properties, tags, and folders. Design v1 so this can be added as a new *writer* without rewriting parsing or transformation.
+**v1: normalized Markdown export.** Rewrite Obsidian-specific syntax into Markdown that AFFiNE's Markdown importer handles well, and package it with its attachments.
 
 ### Features to preserve
 
@@ -68,7 +67,7 @@ scan → parse → resolve → transform → write → report
 | **parse** | Read each note into an AST plus frontmatter. No I/O beyond reading. |
 | **resolve** | Build a vault-wide index and resolve wikilinks, embeds, and attachments to concrete targets. |
 | **transform** | Pure functions that rewrite ASTs into the target dialect and collect warnings. |
-| **write** | A format-specific *writer* (`markdown` now, `snapshot` later) that emits the output and copies attachments. |
+| **write** | A format-specific *writer* (`markdown` today) that emits the output and copies attachments. |
 | **report** | Summarize conversions, warnings, and broken links for the console and as a machine-readable file (for example `conversion-report.json`). |
 
 Suggested layout:
@@ -147,7 +146,7 @@ This project uses **test-driven development**:
 
 ## CLI conventions
 
-- Shape: `obsidian-to-affine <vault-path> [--out <path>] [--format markdown] [--zip] [--exclude <glob>...] [--report <path>] [--verbose]`.
+- Shape: `obsidian-to-affine <vault-path> [--out <path>] [--zip] [--exclude <glob>...] [--report <path>] [--verbose]`.
 - Exit codes: `0` success (warnings allowed), `1` fatal error (bad input, output inside the vault, I/O failure), `2` invalid usage.
 - Progress and warnings go to stderr. Machine-readable output, if any, goes to stdout or the report file.
 - Error messages must be clear and actionable, and include the offending path.
@@ -166,7 +165,7 @@ This project uses **test-driven development**:
 - Write the failing test (and fixture) before the implementation.
 - Keep the source vault untouched and the output deterministic.
 - Report every lossy conversion and broken link.
-- Keep writers pluggable so the snapshot format can be added later.
+- Keep writers pluggable.
 
 **Don't**
 

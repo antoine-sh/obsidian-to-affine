@@ -9,7 +9,7 @@ import {
 } from "../index.ts";
 
 const USAGE =
-	"Usage: obsidian-to-affine <vault-path> [--out <path>] [--format markdown] [--zip] [--exclude <glob>...] [--report <path>] [--verbose]";
+	"Usage: obsidian-to-affine <vault-path> [--out <path>] [--zip] [--exclude <glob>...] [--report <path>] [--verbose]";
 
 function usageError(message: string): never {
 	console.error(`${message}\n${USAGE}`);
@@ -22,7 +22,6 @@ const { positionals, values } = (() => {
 			allowPositionals: true,
 			options: {
 				exclude: { type: "string", multiple: true },
-				format: { type: "string" },
 				out: { type: "string" },
 				report: { type: "string" },
 				verbose: { type: "boolean" },
@@ -36,12 +35,9 @@ const { positionals, values } = (() => {
 const [vaultPath] = positionals;
 if (positionals.length !== 1 || vaultPath === undefined)
 	usageError("Expected exactly one vault path.");
-for (const flag of ["report", "format", "zip", "verbose"] as const)
+for (const flag of ["report", "zip", "verbose"] as const)
 	if (values[flag] !== undefined && values.out === undefined)
 		usageError(`--${flag} requires --out.`);
-// Only one writer so far; `snapshot` is planned.
-if (values.format !== undefined && values.format !== "markdown")
-	usageError(`Unsupported --format: ${values.format} (supported: markdown).`);
 
 try {
 	if (values.out !== undefined) {

@@ -22,12 +22,11 @@ Once installed as a package, the binary is `obsidian-to-affine`.
 |---|---|
 | `--out <path>` | Where to write the export. Must be outside the vault, and a new or empty directory (a new file with `--zip`). Without `--out`, the tool only lists the notes, attachments and ignored paths it found. |
 | `--zip` | Write `--out` as a zip archive instead of a directory. |
-| `--format markdown` | Output format. Only `markdown` exists today. |
 | `--exclude <glob>` | Skip vault paths matching the glob. Repeatable. |
 | `--report <path>` | Also write the conversion report as JSON. Must be outside the vault and the export. |
 | `--verbose` | Print progress to stderr. |
 
-`--format`, `--zip`, `--report` and `--verbose` require `--out`.
+`--zip`, `--report` and `--verbose` require `--out`.
 
 Progress and warnings go to stderr. Exit codes: `0` success (warnings allowed), `1` fatal error (bad vault, unsafe output path, I/O failure), `2` invalid usage.
 
@@ -49,6 +48,8 @@ obsidian-to-affine ~/Vaults/notes --out ~/export.zip --zip --exclude "Templates/
 | Frontmatter | Kept. `tags`/`tag` keys merge with inline `#tags` (including `#a/b`) into one deduplicated `tags` list. |
 | Inline `#tags` | Left as text, and added to the frontmatter `tags`. |
 | `.canvas`, Excalidraw, `dataview`/`dataviewjs`/`tasks`/`query` blocks | Kept as fenced code, with an `unsupported` warning. `.canvas` files get a `.md` suffix. |
+
+**Tags and properties are ignored by AFFiNE.** AFFiNE's Markdown importer has no way to turn frontmatter properties or tags into AFFiNE properties or tags, and no file format AFFiNE imports can carry them together with folders and linked docs. They stay in each note as frontmatter text, but they will not appear as AFFiNE tags or properties after import.
 
 Dot-prefixed paths (`.obsidian/`, `.trash/`, `.git/`) are ignored. Output is deterministic: the same vault always gives the same bytes.
 
@@ -80,8 +81,6 @@ scan → parse → resolve → transform → write → report
 | `src/cli` | Argument parsing only. |
 
 `convertVault` in `src/index.ts` runs the whole pipeline and is the programmatic entry point.
-
-A planned `--format snapshot` would add a second writer that keeps more detail (linked docs, properties, folders).
 
 ## Development
 

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { unzipSync } from "fflate";
@@ -73,7 +73,7 @@ test("CLI exits 1 when --out is inside the vault", () => {
 	expect(r.stderr).toContain(`outside the vault: ${vault}/out`);
 });
 
-test("CLI accepts --format markdown", () => {
+test("CLI rejects --format, which no longer exists", () => {
 	const out = join(mkdtempSync(join(tmpdir(), "o2a-")), "out");
 	const r = cli(
 		"test/fixtures/write-basic/vault",
@@ -82,24 +82,11 @@ test("CLI accepts --format markdown", () => {
 		"--format",
 		"markdown",
 	);
-	expect(r.status).toBe(0);
-	expect(readTree(out)).toEqual(readTree("test/fixtures/write-basic/expected"));
-});
-
-test("CLI exits 2 on an unknown --format", () => {
-	const out = join(mkdtempSync(join(tmpdir(), "o2a-")), "out");
-	const r = cli(
-		"test/fixtures/write-basic/vault",
-		"--out",
-		out,
-		"--format",
-		"snapshot",
-	);
 	expect(r.status).toBe(2);
-	expect(r.stderr).toContain("Unsupported --format: snapshot");
+	expect(existsSync(out)).toBe(false);
 });
 
-test.each([["--zip"], ["--verbose"], ["--format", "markdown"]])(
+test.each([["--zip"], ["--verbose"]])(
 	"CLI exits 2 when %s is given without --out",
 	(...flag) => {
 		const r = cli("test/fixtures/write-basic/vault", ...flag);
